@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Ordine Confermato — ReadYourMood</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link th:href="@{/css/style.css}" rel="stylesheet"/>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container flex-grow-1 d-flex align-items-center justify-content-center py-5">
+        <div class="form-card-rym text-center">
+            <div style="font-size:5rem">🎉</div>
+            <h2 style="color:var(--malva)">Acquisto completato!</h2>
+            <p class="text-muted">Il tuo ordine è stato registrato con successo.</p>
+            <div class="detail-card-rym p-3 mb-3">
+                <div style="font-size:1.5rem;font-weight:bold;color:var(--malva)"
+                     th:text="'€ ' + ${#numbers.formatDecimal(ordine.totale, 1, 2)}"></div>
+                <small class="text-muted">Totale ordine</small>
+                <hr/>
+                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                    <span th:each="libro : ${ordine.libri}" class="badge-emozione" th:text="${libro.titolo}"></span>
+                </div>
+            </div>
+            <a href="/area-personale" class="btn btn-rym me-2">Vai ai tuoi acquisti</a>
+            
+            <a sec:authorize="hasAuthority('ADMIN')" th:href="@{http://localhost:5174(ruolo='ADMIN', nome=${#authentication.name})}" class="btn btn-rym-outline">Continua a sfogliare</a>
+            <a sec:authorize="isAuthenticated() and !hasAuthority('ADMIN')" th:href="@{http://localhost:5174(ruolo='USER', nome=${#authentication.name})}" class="btn btn-rym-outline">Continua a sfogliare</a>
+            <a sec:authorize="isAnonymous()" href="http://localhost:5174" class="btn btn-rym-outline">Continua a sfogliare</a>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Lascia una Recensione — ReadYourMood</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link th:href="@{/css/style.css}" rel="stylesheet"/>
+    <style>
+        .stelle-input { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 6px; }
+        .stelle-input input { display: none; }
+        .stelle-input label { font-size: 2.5rem; color: #ddd; cursor: pointer; transition: color 0.1s; }
+        .stelle-input label:hover,
+        .stelle-input label:hover ~ label,
+        .stelle-input input:checked ~ label { color: var(--rosa) !important; }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="page-header-rym">
+        <div class="container"><h1>⭐ Lascia una Recensione</h1></div>
+    </div>
+    <div class="container flex-grow-1 pb-4">
+        <div class="form-card-rym">
+            <p class="text-muted mb-4">
+                Ordine #<strong th:text="${ordine.id}"></strong> — 
+                Venditore: <strong th:text="${ordine.libri[0].venditore.nome + ' ' + ordine.libri[0].venditore.cognome}"></strong>
+            </p>
+            <form th:action="@{/ordini/{id}/recensisci(id=${ordine.id})}" method="post">
+                <div class="mb-4 text-center">
+                    <label class="form-label fw-bold d-block">Voto</label>
+                    <div class="stelle-input justify-content-center">
+                        <input type="radio" id="v5" name="voto" value="5" required/>
+                        <label for="v5">★</label>
+                        <input type="radio" id="v4" name="voto" value="4"/>
+                        <label for="v4">★</label>
+                        <input type="radio" id="v3" name="voto" value="3"/>
+                        <label for="v3">★</label>
+                        <input type="radio" id="v2" name="voto" value="2"/>
+                        <label for="v2">★</label>
+                        <input type="radio" id="v1" name="voto" value="1"/>
+                        <label for="v1">★</label>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Commento</label>
+                    <textarea name="commento" class="form-control" rows="4"
+                              placeholder="Racconta la tua esperienza con questo venditore..."
+                              required></textarea>
+                </div>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="btn btn-rym me-2">⭐ Invia Recensione</button>
+                <a href="/area-personale" class="btn btn-outline-secondary">Annulla</a>
+            </form>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

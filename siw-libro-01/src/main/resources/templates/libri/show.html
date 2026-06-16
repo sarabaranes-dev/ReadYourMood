@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="${libro.titolo} + ' — ReadYourMood'">Libro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link th:href="@{/css/style.css}" rel="stylesheet"/>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="page-header-rym">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/" style="color:#F0D8E0">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/libri" style="color:#F0D8E0">Libri</a></li>
+                    <li class="breadcrumb-item active" th:text="${libro.titolo}"></li>
+                </ol>
+            </nav>
+            <h1 th:text="${libro.titolo}"></h1>
+        </div>
+    </div>
+    <div class="container flex-grow-1 pb-4">
+        <div class="detail-card-rym">
+            <div class="detail-card-body-rym">
+                <div class="row">
+                    <!-- Copertina -->
+                    <div class="col-md-3 text-center mb-4 mb-md-0">
+                        <img th:if="${libro.foto != null}"
+                             th:src="@{/uploads/{f}(f=${libro.foto})}"
+                             class="cover-grande" alt="copertina"/>
+                        <div th:if="${libro.foto == null}" class="cover-placeholder-grande mx-auto">📖</div>
+                        <div class="mt-3">
+                            <span class="badge-emozione" th:text="${libro.emozione}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Dettagli -->
+                    <div class="col-md-6">
+                        <h2 style="color:var(--malva)" th:text="${libro.titolo}"></h2>
+                        <p class="text-muted" style="font-size:1.1rem" th:text="'di ' + ${libro.autore}"></p>
+                        <div class="stelle mb-2">
+                            <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                                <span th:text="${i <= libro.valutazione} ? '★' : '☆'"></span>
+                            </th:block>
+                            <small class="text-muted ms-1" th:text="'(' + ${libro.valutazione} + '/5)'"></small>
+                        </div>
+                        <p><strong>Anno:</strong> <span th:text="${libro.anno}"></span></p>
+                        <p><strong>Condizioni:</strong> <span class="badge-condizione" th:text="${libro.condizione}"></span></p>
+                        <p><strong>Inserito il:</strong> <span th:text="${#temporals.format(libro.dataInserimento, 'dd/MM/yyyy')}"></span></p>
+                        <hr/>
+                        <p style="line-height:1.8" th:text="${libro.trama}"></p>
+                    </div>
+
+                    <!-- Prezzo e azioni -->
+<div class="col-md-3">
+    <div class="detail-card-rym p-3 text-center">
+        <div style="font-size:2rem;font-weight:bold;color:var(--malva)"
+             th:text="'€ ' + ${#numbers.formatDecimal(libro.prezzo, 1, 2)}"></div>
+        <div class="mb-3">
+            <span class="badge-disponibile" th:if="${libro.stato.name() == 'DISPONIBILE'}">Disponibile</span>
+            <span class="badge-venduto" th:if="${libro.stato.name() == 'VENDUTO'}">Venduto</span>
+        </div>
+
+        <!-- Acquisto: solo se loggato E non sei il venditore -->
+        <div th:if="${libro.stato.name() == 'DISPONIBILE'
+             and utenteLoggato != null
+             and utenteLoggato.utente.id != libro.venditore.id
+             and libro.venditore.stato.name() == 'ATTIVO'}"
+     sec:authorize="isAuthenticated()">
+    <a th:href="@{/libri/{id}/acquista(id=${libro.id})}"
+       class="btn btn-rym w-100 mb-2"
+       onclick="return confirm('Confermi l\'acquisto?')">🛒 Acquista Subito</a>
+    <a th:href="@{/libri/{id}/crea-set(id=${libro.id})}"
+       class="btn-rym-outline w-100 text-center d-block mb-2">📦 Crea Set</a>
+</div>
+
+<!-- Venditore bloccato -->
+<div th:if="${libro.venditore.stato.name() == 'BLOCCATO'
+             and libro.stato.name() == 'DISPONIBILE'}">
+    <p class="text-muted small" style="background:#f8f8f8;border-radius:8px;padding:0.8rem">
+        ⚠️ Questo venditore non è al momento attivo. Il libro non è acquistabile.
+    </p>
+</div>
+
+        <!-- Messaggio se sei il venditore -->
+        <div th:if="${utenteLoggato != null
+                     and utenteLoggato.utente.id == libro.venditore.id}"
+             sec:authorize="isAuthenticated()">
+            <p class="text-muted small">Questo è un tuo libro</p>
+            <a th:if="${libro.stato.name() == 'DISPONIBILE'}" 
+               th:href="@{/miei-libri/{id}/edit(id=${libro.id})}"
+               class="btn btn-rym w-100">✏️ Modifica</a>
+            <button th:if="${libro.stato.name() == 'VENDUTO'}" 
+                    type="button" class="btn btn-secondary w-100" style="cursor: not-allowed;" disabled>🔒 Modifiche Disabilitate</button>
+        </div>
+
+        <!-- Accedi se anonimo -->
+        <div sec:authorize="isAnonymous()"
+             th:if="${libro.stato.name() == 'DISPONIBILE'}">
+            <a href="/login" class="btn btn-rym w-100">Accedi per acquistare</a>
+        </div>
+
+        <hr/>
+        <p class="mb-1" style="font-size:0.85rem;color:#888">Venduto da:</p>
+        <a th:href="@{/venditori/{id}(id=${libro.venditore.id})}"
+           style="color:var(--malva);font-weight:500"
+           th:text="${libro.venditore.nome + ' ' + libro.venditore.cognome}"></a>
+    </div>
+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

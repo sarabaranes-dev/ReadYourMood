@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="${venditore.nome + ' ' + venditore.cognome} + ' — ReadYourMood'">Venditore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link th:href="@{/css/style.css}" rel="stylesheet"/>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="page-header-rym">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/" style="color:#F0D8E0">Home</a></li>
+                    <li class="breadcrumb-item active">Profilo</li>
+                </ol>
+            </nav>
+            <h1 th:text="'👤 ' + ${venditore.nome + ' ' + venditore.cognome}"></h1>
+        </div>
+    </div>
+
+    <!-- ===== CASO: UTENTE BLOCCATO ===== -->
+    <div th:if="${venditore.stato.name() == 'BLOCCATO'}"
+         class="container flex-grow-1 d-flex align-items-center justify-content-center py-5">
+        <div class="form-card-rym text-center">
+            <div style="font-size:4rem">🚫</div>
+            <h3 style="color:var(--malva)">Profilo non disponibile</h3>
+            <p class="text-muted">Questo utente non è al momento attivo sulla piattaforma.</p>
+            <a href="/libri" class="btn btn-rym">Torna ai libri</a>
+        </div>
+    </div>
+
+    <!-- ===== CASO: UTENTE ATTIVO ===== -->
+    <div th:if="${venditore.stato.name() == 'ATTIVO'}" class="container flex-grow-1 pb-4">
+        <div class="row">
+
+            <!-- Colonna sinistra: info utente -->
+            <div class="col-md-3 mb-4">
+                <div class="detail-card-rym">
+                    <div class="detail-card-body-rym text-center">
+                        <div style="width:80px;height:80px;background:var(--rosa-chiaro);border-radius:50%;
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-size:2.5rem;margin:0 auto 1rem">👤</div>
+                        <h5 th:text="${venditore.nome + ' ' + venditore.cognome}"></h5>
+                        <p class="text-muted small" th:text="${venditore.email}"></p>
+                        <div class="stelle mb-1">
+                            <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                                <span th:text="${i <= mediaVoti} ? '★' : '☆'"></span>
+                            </th:block>
+                        </div>
+                        <p class="text-muted small"
+                           th:text="${#numbers.formatDecimal(mediaVoti, 1, 1)} + '/5 — ' + ${recensioni.size()} + ' recensioni'"></p>
+                        <hr/>
+                        <div class="d-flex justify-content-around text-center">
+                            <div>
+                                <div style="font-size:1.3rem;font-weight:bold;color:var(--malva)"
+                                     th:text="${libriPubblicati.size()}"></div>
+                                <small class="text-muted">Libri</small>
+                            </div>
+                            <div>
+                                <div style="font-size:1.3rem;font-weight:bold;color:var(--rosa)"
+                                     th:text="${ordiniAcquistati.size()}"></div>
+                                <small class="text-muted">Acquisti</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonna destra: contenuto a tab -->
+            <div class="col-md-9">
+                <ul class="nav nav-tabs mb-4" id="profiloTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tab-libri"
+                           style="color:var(--malva)">
+                            📚 Libri pubblicati
+                            <span class="badge rounded-pill ms-1"
+                                  style="background:var(--rosa);color:white"
+                                  th:text="${libriPubblicati.size()}"></span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-acquisti"
+                           style="color:var(--malva)">
+                            🛒 Acquisti
+                            <span class="badge rounded-pill ms-1"
+                                  style="background:var(--rosa);color:white"
+                                  th:text="${ordiniAcquistati.size()}"></span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-recensioni"
+                           style="color:var(--malva)">
+                            ⭐ Recensioni
+                            <span class="badge rounded-pill ms-1"
+                                  style="background:var(--rosa);color:white"
+                                  th:text="${recensioni.size()}"></span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+
+                    <!-- Tab: Libri pubblicati -->
+                    <div class="tab-pane fade show active" id="tab-libri">
+                        <div class="row g-3" th:if="${!libriPubblicati.isEmpty()}">
+                            <div class="col-6 col-md-3" th:each="libro : ${libriPubblicati}">
+                                <a th:href="@{/libri/{id}(id=${libro.id})}" class="libro-card d-block">
+                                    <div class="libro-card-cover">
+                                        <img th:if="${libro.foto != null}"
+                                             th:src="@{/uploads/{f}(f=${libro.foto})}" alt="copertina"/>
+                                        <span th:if="${libro.foto == null}">📖</span>
+                                    </div>
+                                    <div class="libro-card-body">
+                                        <div class="libro-card-titolo" th:text="${libro.titolo}"></div>
+                                        <div class="libro-card-autore" th:text="${libro.autore}"></div>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <span class="libro-card-prezzo"
+                                                  th:text="'€ ' + ${#numbers.formatDecimal(libro.prezzo, 1, 2)}"></span>
+                                            <span class="badge-disponibile"
+                                                  th:if="${libro.stato.name() == 'DISPONIBILE'}"
+                                                  style="font-size:0.65rem">●</span>
+                                            <span class="badge-venduto"
+                                                  th:if="${libro.stato.name() == 'VENDUTO'}"
+                                                  style="font-size:0.65rem">●</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        <div th:if="${libriPubblicati.isEmpty()}" class="text-center py-4 text-muted">
+                            <span style="font-size:3rem">📭</span>
+                            <p>Nessun libro pubblicato.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Acquisti -->
+                    <div class="tab-pane fade" id="tab-acquisti">
+                        <div th:if="${!ordiniAcquistati.isEmpty()}">
+                            <div th:each="ordine : ${ordiniAcquistati}" class="detail-card-rym mb-3">
+                                <div class="detail-card-body-rym">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <strong>Ordine #<span th:text="${ordine.id}"></span></strong>
+                                            <span class="ms-2 text-muted small"
+                                                  th:text="${#temporals.format(ordine.dataOrdine, 'dd/MM/yyyy')}"></span>
+                                        </div>
+                                        <div>
+                                            <span style="font-weight:bold;color:var(--malva)"
+                                                  th:text="'€ ' + ${#numbers.formatDecimal(ordine.totale, 1, 2)}"></span>
+                                            <span class="badge-disponibile ms-2"
+                                                  th:text="${ordine.stato}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <a th:each="libro : ${ordine.libri}"
+                                           th:href="@{/libri/{id}(id=${libro.id})}"
+                                           class="d-flex align-items-center gap-2 text-decoration-none"
+                                           style="background:var(--sfondo);border-radius:8px;padding:4px 8px;border:1px solid #f0e8eb">
+                                            <img th:if="${libro.foto != null}"
+                                                 th:src="@{/uploads/{f}(f=${libro.foto})}"
+                                                 style="width:30px;height:40px;object-fit:cover;border-radius:4px"/>
+                                            <span th:if="${libro.foto == null}" style="font-size:1.2rem">📖</span>
+                                            <div>
+                                                <div style="font-size:0.8rem;font-weight:bold;color:var(--testo)"
+                                                     th:text="${libro.titolo}"></div>
+                                                <div style="font-size:0.75rem;color:#888"
+                                                     th:text="${libro.autore}"></div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${ordiniAcquistati.isEmpty()}" class="text-center py-4 text-muted">
+                            <span style="font-size:3rem">🛒</span>
+                            <p>Nessun acquisto effettuato.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Recensioni ricevute -->
+                    <div class="tab-pane fade" id="tab-recensioni">
+                        <div th:if="${!recensioni.isEmpty()}">
+                            <div th:each="rec : ${recensioni}" class="recensione-card">
+                                <div class="stelle-sm mb-1">
+                                    <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                                        <span th:text="${i <= rec.voto} ? '★' : '☆'"></span>
+                                    </th:block>
+                                    <strong class="ms-1" th:text="${rec.voto} + '/5'"></strong>
+                                </div>
+                                <p class="mb-1" th:text="${rec.commento}"></p>
+                                <small class="text-muted"
+                                       th:text="'— ' + ${rec.acquirente.nome + ' ' + rec.acquirente.cognome} + ' • ' + ${#temporals.format(rec.dataRecensione, 'dd/MM/yyyy')}"></small>
+                            </div>
+                        </div>
+                        <div th:if="${recensioni.isEmpty()}" class="text-center py-4 text-muted">
+                            <span style="font-size:3rem">⭐</span>
+                            <p>Ancora nessuna recensione ricevuta.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Area Personale — ReadYourMood</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link th:href="@{/css/style.css}" rel="stylesheet"/>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="page-header-rym">
+        <div class="container">
+            <h1 th:text="'👋 Ciao, ' + ${utente.nome} + '!'"></h1>
+            <p class="mb-0" style="color:#F0D8E0" th:text="${utente.email}"></p>
+        </div>
+    </div>
+    <div class="container flex-grow-1 pb-4">
+        <div class="row g-3 mb-4 mt-2">
+            <div class="col-6 col-md-3">
+                <div class="stat-card-rym">
+                    <div class="stat-number-rym" th:text="${libriInVendita.size()}">0</div>
+                    <div class="stat-label-rym">Libri in vendita</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card-rym" style="border-top-color:var(--menta)">
+                    <div class="stat-number-rym" th:text="${ordini.size()}">0</div>
+                    <div class="stat-label-rym">Ordini effettuati</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 style="color:var(--malva)">📚 I miei libri</h4>
+            <a href="/miei-libri/nuovo" class="btn btn-rym">+ Aggiungi libro</a>
+        </div>
+
+        <div class="row g-3 mb-4" th:if="${!libriInVendita.isEmpty()}">
+            <div class="col-6 col-md-2" th:each="libro : ${libriInVendita}">
+                <div class="libro-card">
+                    <a th:href="@{/libri/{id}(id=${libro.id})}" style="text-decoration:none;color:inherit">
+                        <div class="libro-card-cover">
+                            <img th:if="${libro.foto != null}" th:src="@{/uploads/{f}(f=${libro.foto})}" alt="copertina"/>
+                            <span th:if="${libro.foto == null}">📖</span>
+                        </div>
+                        <div class="libro-card-body">
+                            <div class="libro-card-titolo" th:text="${libro.titolo}"></div>
+                            <div class="libro-card-prezzo" th:text="'€ ' + ${#numbers.formatDecimal(libro.prezzo, 1, 2)}"></div>
+                            <div>
+                                <span class="badge-disponibile" th:if="${libro.stato.name() == 'DISPONIBILE'}" style="font-size:0.7rem">Disponibile</span>
+                                <span class="badge-venduto" th:if="${libro.stato.name() == 'VENDUTO'}" style="font-size:0.7rem">Venduto</span>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="px-2 pb-2 d-flex gap-1"
+                         th:if="${libro.stato.name() == 'DISPONIBILE'}">
+                        <a th:href="@{/miei-libri/{id}/edit(id=${libro.id})}"
+                           class="btn btn-warning btn-sm flex-fill" style="font-size:0.75rem">✏️</a>
+                        <a th:href="@{/miei-libri/{id}/delete(id=${libro.id})}"
+                           class="btn btn-danger btn-sm flex-fill" style="font-size:0.75rem"
+                           onclick="return confirm('Eliminare questo libro?')">🗑️</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${libriInVendita.isEmpty()}" class="text-muted mb-4">
+            Non hai ancora messo in vendita nessun libro.
+            <a href="/miei-libri/nuovo" style="color:var(--rosa)">Inizia adesso →</a>
+        </div>
+
+        <h4 style="color:var(--malva)" class="mt-4 mb-3">🛒 I miei acquisti</h4>
+        <div th:if="${!ordini.isEmpty()}">
+            <div th:each="ordine : ${ordini}" class="detail-card-rym mb-3 p-3">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <div>
+                        <strong>Ordine #ORD-000<span th:text="${ordine.id}"></span></strong>
+                        <span class="ms-2 text-muted small"
+                              th:text="${#temporals.format(ordine.dataOrdine, 'dd/MM/yyyy HH:mm')}"></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-weight:bold;color:var(--malva)"
+                              th:text="'€ ' + ${#numbers.formatDecimal(ordine.totale, 1, 2)}"></span>
+                        <span class="badge-disponibile" th:if="${ordine.stato.name() == 'COMPLETATO'}">Completato</span>
+                        <a th:if="${ordine.stato.name() == 'COMPLETATO'}"
+                            th:href="${#lists.contains(ordiniRecensitiIds, ordine.id)} ? '#' : @{/ordini/{id}/recensisci(id=${ordine.id})}"
+                            th:class="${#lists.contains(ordiniRecensitiIds, ordine.id)} ? 'btn btn-sm btn-secondary' : 'btn btn-sm btn-rym-outline'"
+                            th:style="${#lists.contains(ordiniRecensitiIds, ordine.id)} ? 'cursor: not-allowed; pointer-events: none;' : ''"
+                            th:text="${#lists.contains(ordiniRecensitiIds, ordine.id)} ? ' Recensito' : '⭐ Recensisci'">
+                        </a>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 mt-2 flex-wrap">
+                    <div th:each="libro : ${ordine.libri}" class="d-flex flex-column align-items-center" style="width: 80px;">
+                        <div class="libro-card-cover shadow-sm" style="height: 110px; width: 75px; border-radius: 4px; overflow: hidden; margin-bottom: 5px;">
+                            <img th:if="${libro.foto != null}" th:src="@{/uploads/{f}(f=${libro.foto})}" style="object-fit: cover; width: 100%; height: 100%;" alt="copertina"/>
+                            <div th:if="${libro.foto == null}" class="d-flex align-items-center justify-content-center h-100 w-100 bg-light" style="font-size: 1.5rem;">📖</div>
+                        </div>
+                        <small class="text-center text-truncate w-100 text-muted" style="font-size: 0.75rem;" th:text="${libro.titolo}"></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div th:if="${ordini.isEmpty()}" class="text-muted">
+            Non hai ancora effettuato acquisti. <a href="http://localhost:5174" style="color:var(--rosa)">Scopri i libri →</a>
+        </div>
+
+        <h4 style="color:var(--malva)" class="mt-5 mb-3">⭐ Recensioni Ricevute</h4>
+        <div th:if="${!recensioniRicevute.isEmpty()}" class="row g-3 mb-5">
+            <div th:each="recensione : ${recensioniRicevute}" class="col-md-6">
+                <div class="detail-card-rym p-3 h-100 shadow-sm" style="border-left: 4px solid var(--malva);">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong><span th:text="${recensione.acquirente.nome}"></span> <span class="text-muted fw-normal">ha detto:</span></strong>
+                        <div style="color: #ffc107; font-size: 1.1rem;">
+                            <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                                <span th:text="${i <= recensione.voto} ? '★' : '☆'"></span>
+                            </th:block>
+                        </div>
+                    </div>
+                    <p class="mb-2" style="font-size:0.95rem; font-style: italic;" th:text="${recensione.commento}"></p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted" th:text="${#temporals.format(recensione.dataRecensione, 'dd/MM/yyyy')}"></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div th:if="${recensioniRicevute.isEmpty()}" class="text-muted mb-5">
+            Non hai ancora ricevuto recensioni.
+        </div>
+
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

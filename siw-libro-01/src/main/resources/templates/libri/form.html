@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Gestisci Libro — ReadYourMood</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link th:href="@{/css/style.css}" rel="stylesheet"/>
+    <style>
+        /* Stelle interattive nel form */
+        .stelle-input { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 4px; }
+        .stelle-input input { display: none; }
+        .stelle-input label { font-size: 2rem; color: #ddd; cursor: pointer; transition: color 0.1s; }
+        .stelle-input label:hover,
+        .stelle-input label:hover ~ label { color: var(--rosa) !important; }
+        .stelle-input input:checked ~ label { color: var(--rosa) !important; }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="page-header-rym">
+        <div class="container">
+            <h1 th:text="${libro.id == null} ? '📖 Nuovo Libro' : '✏️ Modifica Libro'"></h1>
+        </div>
+    </div>
+    <div class="container flex-grow-1 pb-4">
+        <div class="form-card-rym">
+            <form th:action="${libro.id == null ? '/miei-libri/save' : '/miei-libri/' + libro.id + '/update'}"
+                  th:object="${libro}" method="post" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Titolo</label>
+                            <input type="text" class="form-control" th:field="*{titolo}" required/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Autore</label>
+                            <input type="text" class="form-control" th:field="*{autore}" required/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Anno di pubblicazione</label>
+                            <input type="number" class="form-control" th:field="*{anno}" required/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Prezzo (€)</label>
+                            <input type="number" step="0.50" min="0" class="form-control" th:field="*{prezzo}" required/>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Emozione associata</label>
+                            <select class="form-select" th:field="*{emozione}" required>
+                                <option value="">-- Seleziona emozione --</option>
+                                <option th:each="em : ${emozioni}" th:value="${em}" th:text="${em}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Condizioni del libro</label>
+                            <select class="form-select" th:field="*{condizione}" required>
+                                <option value="">-- Seleziona condizioni --</option>
+                                <option th:each="cond : ${condizioni}" th:value="${cond}" th:text="${cond}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">La tua valutazione</label>
+                            <div class="stelle-input">
+                                <input type="radio" id="s5" name="valutazione" value="5" th:checked="*{valutazione == 5}"/>
+                                <label for="s5">★</label>
+                                <input type="radio" id="s4" name="valutazione" value="4" th:checked="*{valutazione == 4}"/>
+                                <label for="s4">★</label>
+                                <input type="radio" id="s3" name="valutazione" value="3" th:checked="*{valutazione == 3}"/>
+                                <label for="s3">★</label>
+                                <input type="radio" id="s2" name="valutazione" value="2" th:checked="*{valutazione == 2}"/>
+                                <label for="s2">★</label>
+                                <input type="radio" id="s1" name="valutazione" value="1" th:checked="*{valutazione == 1}"/>
+                                <label for="s1">★</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Copertina</label>
+                            <div th:if="${libro.foto != null}" class="mb-2">
+                                <img th:src="@{/uploads/{f}(f=${libro.foto})}"
+                                     style="height:80px;border-radius:8px"/>
+                            </div>
+                            <input type="file" class="form-control" name="file" accept="image/*"/>
+                            <small class="text-muted">Lascia vuoto per mantenere la foto attuale</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Trama / Descrizione</label>
+                    <textarea class="form-control" th:field="*{trama}" rows="4"
+                              placeholder="Racconta qualcosa del libro..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-rym me-2">💾 Salva</button>
+                <a href="/area-personale" class="btn btn-outline-secondary">Annulla</a>
+            </form>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

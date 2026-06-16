@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Libri — ReadYourMood</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link th:href="@{/css/style.css}" rel="stylesheet"/>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="page-header-rym">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/" style="color:#F0D8E0">Home</a></li>
+                    <li class="breadcrumb-item active">Libri</li>
+                </ol>
+            </nav>
+            <h1>📖 Catalogo Libri</h1>
+        </div>
+    </div>
+    <div class="container flex-grow-1 pb-4">
+
+        <div class="search-bar-rym">
+            <form method="get" action="/libri">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Titolo</label>
+                        <input type="text" name="titolo" class="form-control form-control-sm"
+                               placeholder="Cerca titolo..." th:value="${cercaPerTitolo}"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Autore</label>
+                        <input type="text" name="autore" class="form-control form-control-sm"
+                               placeholder="Cerca autore..." th:value="${cercaPerAutore}"/>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Anno</label>
+                        <input type="number" name="anno" class="form-control form-control-sm"
+                               placeholder="Es. 2020" th:value="${cercaPerAnno}"/>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Valutazione</label>
+                        <select name="valutazione" class="form-select form-select-sm">
+                            <option value="">Tutte</option>
+                            <option th:each="v : ${#numbers.sequence(1,5)}"
+                                    th:value="${v}"
+                                    th:text="${v} + ' ★'"
+                                    th:selected="${cercaPerValutazione == v}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-rym w-100">Cerca</button>
+                        <a href="/libri" class="btn btn-outline-secondary btn-sm w-100 mt-1">Reset</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-6 col-md-3 col-lg-2" th:each="libro : ${libri}">
+                <a th:href="@{/libri/{id}(id=${libro.id})}" class="libro-card d-block">
+                    <div class="libro-card-cover">
+                        <img th:if="${libro.foto != null}"
+                             th:src="@{/uploads/{f}(f=${libro.foto})}"
+                             alt="copertina"/>
+                        <span th:if="${libro.foto == null}">📖</span>
+                    </div>
+                    <div class="libro-card-body">
+                        <div class="libro-card-titolo" th:text="${libro.titolo}"></div>
+                        <div class="libro-card-autore" th:text="${libro.autore}"></div>
+                        <div class="stelle-sm">
+                            <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                                <span th:text="${i <= libro.valutazione} ? '★' : '☆'"></span>
+                            </th:block>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <span class="libro-card-prezzo" th:text="'€ ' + ${#numbers.formatDecimal(libro.prezzo, 1, 2)}"></span>
+                            <span class="badge-condizione" style="font-size:0.7rem" th:text="${libro.condizione}"></span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${libri.isEmpty()}" class="text-center py-5">
+            <span style="font-size:4rem">📭</span>
+            
+            <th:block th:if="${emozioneSelezionata != null}">
+                <p class="text-muted mt-2">Non ci sono libri per questa emozione.</p>
+                <a href="/libri/cerca-emozione" class="btn btn-rym">Torna alle emozioni</a>
+            </th:block>
+
+            <th:block th:if="${emozioneSelezionata == null}">
+                <p class="text-muted mt-2">Nessun libro trovato.</p>
+                <a href="/libri" class="btn btn-rym">Vedi tutti i libri</a>
+            </th:block>
+        </div>
+
+        <nav th:if="${totalePagine > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${paginaCorrente == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/libri(page=${paginaCorrente - 1})}">←</a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalePagine - 1)}"
+                    th:classappend="${i == paginaCorrente} ? 'active'">
+                    <a class="page-link" th:href="@{/libri(page=${i})}" th:text="${i + 1}"></a>
+                </li>
+                <li class="page-item" th:classappend="${paginaCorrente == totalePagine - 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/libri(page=${paginaCorrente + 1})}">→</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
