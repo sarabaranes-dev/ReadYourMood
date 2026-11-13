@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: books
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      # Runs only the first time, when the volume is empty
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d books"]
+      interval: 5s
+      retries: 10
+
+  backend:
+    build: ./siw-libro-01
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/books
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    ports:
+      - "8081:8081"
+    volumes:
+      # Book covers: same folder used when running without Docker
+      - ./siw-libro-01/uploads:/app/uploads
+
+volumes:
+  db-data:
