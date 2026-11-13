@@ -48,10 +48,10 @@ public class AuthConfiguration {
     protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http
             .cors().and()
-            // LA CORREZIONE È QUI: Disabilitiamo il CSRF *SOLO* per le chiamate di React!
             .csrf().ignoringRequestMatchers("/rest/**").and()
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/rest/**", "/error").permitAll()
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/", "/libri", "/libri/**", "/libri/cerca", "/libri/cerca-emozione",
                     "/venditori/**",
