@@ -1,190 +1,187 @@
-# 📚 ReadYourMood
+# ReadYourMood
 
-[![it](https://img.shields.io/badge/lang-it-green.svg)](#-readyourmood-italiano) 
+[![it](https://img.shields.io/badge/lang-it-green.svg)](#readyourmood--italiano)
 
-*(Italian version below / Versione italiana sotto)*
+**A second-hand book marketplace where you can browse books by the mood they evoke.** Built with Spring Boot, PostgreSQL and Thymeleaf, plus a small React catalog page that reads a REST endpoint. University project for *Sistemi Informativi su Web* (Roma Tre University, 2026), developed in a team of two.
 
-ReadYourMood is an innovative platform for managing, reviewing, and buying books, with a special feature: it helps you find the perfect book based on your current **mood**.
+![Demo: home → browse by mood → book detail](docs/screenshots/demo.gif)
 
-The project consists of a solid backend built with Spring Boot and a modern, responsive user interface developed in React.
+▶️ **[Full walkthrough video (3 min)](docs/demo-full.mp4)**: guest, registered user (sell, buy, create a set, review), blocked user, admin, React page and Swagger.
 
-## ✨ Features
-- **Mood-Based Search**: Find or categorize books based on emotions (`EmozioneLibro`).
-- **Marketplace/Library**: Manage book conditions (`CondizioneLibro`, `StatoLibro`) and user orders (`Ordine`, `StatoOrdine`).
-- **Review System**: Users can leave feedback and review the books they have read (`Recensione`).
-- **User Management**: Registration, authentication, and authorization (Admin/User) via Spring Security and JWT/Sessions.
-- **Image Uploads**: Integrated system for uploading book covers (up to 5MB).
+## Features
 
-## 🛠 Tech Stack
+- **Browse by mood**: every book is tagged with one of 8 emotions (happy, sad, in love, reflective, anxious, nostalgic, angry, scared).
+- **Catalog with filters** by title, author, year and rating, with pagination.
+- **Sell a book**: registered users list their books with condition, price and a cover image (upload up to 5 MB).
+- **Buy**: purchase a single book or a set of books from the same seller; purchased books are marked as sold.
+- **Seller reviews**: after an order, the buyer can rate and review the seller.
+- **Personal area** with the user's books and orders, and a public seller profile.
+- **Admin panel**: block and unblock users. Blocked users cannot log in, and their books cannot be bought.
+- **React catalog page** that loads books from `GET /rest/libri` and filters them client-side.
 
-### Backend (`siw-libro-01`)
-- **Java 17**
-- **Spring Boot 3** (Web, Data JPA, Security, Validation)
-- **Thymeleaf** (Used for some backoffice or legacy views)
-- **PostgreSQL** (Relational Database)
-- **Springdoc OpenAPI (Swagger)** (Automated API documentation)
+| Browse by mood | Book detail |
+|---|---|
+| ![Books tagged "reflective"](docs/screenshots/mood-results.png) | ![Book detail](docs/screenshots/book-detail.png) |
+| **Admin panel** | **React catalog** |
+| ![Admin panel](docs/screenshots/admin-panel.png) | ![React catalog](docs/screenshots/react-catalog.png) |
 
-### Frontend (`siw-libri-react`)
-- **React 19**
-- **TypeScript**
-- **Vite** (Ultra-fast build tool and dev server)
-- **Material UI (MUI)** (React component library for design)
-- **Axios** (HTTP client for backend API integration)
+## Tech stack
 
-## 🏗 Architecture
-The application adopts a classic **Layered Architecture** in the backend, which separates responsibilities and facilitates maintenance:
-- **`controller`**: Handles REST requests (from the React frontend) or MVC requests (for Thymeleaf).
-- **`service`**: Encapsulates all business logic (order management, emotion-book associations).
-- **`repository`**: Persistence layer via Spring Data JPA.
-- **`model`**: JPA entities (`Libro`, `Ordine`, `Utente`, `Recensione`, etc.) directly mapped to PostgreSQL tables.
-- **`authentication`**: Classes dedicated to security and login (Spring Security).
+| Layer | Technologies |
+|---|---|
+| Backend | Java 17, Spring Boot 3.0 (Web MVC, Data JPA, Security, Validation), Hibernate |
+| Database | PostgreSQL |
+| Server-side UI | Thymeleaf, Bootstrap 5 |
+| Frontend (catalog page) | React 19, TypeScript, Vite, Material UI, Axios |
+| API docs | springdoc-openapi (Swagger UI) |
+| Tooling | Maven, Docker Compose, JUnit 5, Mockito |
 
-## 🚀 Setup & Installation
+## Architecture
 
-### Prerequisites
-- **Java 17+**
-- **Node.js 18+**
-- **PostgreSQL** installed and running (default port 5432)
+```
+Browser ──► Thymeleaf pages (Spring MVC controllers)  ─┐
+                                                       ├─► Services ─► JPA repositories ─► PostgreSQL
+React page (Vite) ──► GET /rest/libri (REST controller)┘
+```
 
-### 1. Clone the repository
+- **Most of the application is server-side rendered**: Spring MVC controllers return Thymeleaf views for catalog, book pages, orders, reviews, personal area and admin panel.
+- **One REST endpoint** (`GET /rest/libri`, read-only) feeds the React catalog page.
+- **Layered backend**: `controller` → `service` (business rules, e.g. only the seller can edit a book, sold books cannot be edited) → `repository` (Spring Data JPA) → `model` (JPA entities: `Libro`, `Utente`, `Credenziali`, `Ordine`, `Recensione`).
+- **Security**: Spring Security with form login and server-side sessions, BCrypt-hashed passwords, two roles (`ADMIN`, `USER`).
+
+## My role
+
+Team of two. Split of the original course work:
+
+- **Me**: JPA entities and repositories, MVC controllers and the REST controller (with CORS configuration), React frontend.
+- **My teammate**: Spring Security configuration, service layer, cover image upload, registration and personal area logic.
+- **Together**: Thymeleaf views, sample data, Swagger setup.
+
+After the course (2026) I prepared the project for publication on my own: sample database without personal data, Docker Compose setup, unit tests for the order and book services, public Swagger UI, bug fixes and this README.
+
+## Quick start (Docker)
+
+Requirements: [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
 ```bash
-git clone https://github.com/your-username/ReadYourMood.git
+git clone https://github.com/sarabaranes-dev/ReadYourMood.git
 cd ReadYourMood
+docker compose up --build
 ```
 
-### 2. Configure the Database
-Create a local PostgreSQL database:
-```sql
-CREATE DATABASE books;
-```
-The database credentials can be configured using environment variables. By default, it expects:
-- **Username**: `postgres`
-- **Password**: `postgres`
-*(If your local environment requires different credentials, set the `DB_USERNAME` and `DB_PASSWORD` environment variables before running the application, or update `siw-libro-01/src/main/resources/application.properties` locally)*.
+On the first start PostgreSQL loads the sample data from `db/seed.sql` (16 books, 9 users, orders and reviews). When the log shows `Started SiwLibro01Application`:
 
-### 3. Start the Backend
-Navigate to the backend folder and start the Spring Boot application:
+- App: http://localhost:8081
+- Swagger UI: http://localhost:8081/swagger-ui/index.html
+
+Stop with `Ctrl+C`, then `docker compose down` (add `-v` to also delete the database and reload the sample data next time).
+
+> Port 5432 must be free: stop any local PostgreSQL first.
+
+### Demo accounts
+
+All demo accounts use the password `password`.
+
+| Username | Role | Notes |
+|---|---|---|
+| `admin` | ADMIN | access to the admin panel |
+| `luca` | USER | regular user with books for sale |
+| `paolo` | USER | blocked user |
+
+You can also register a new account (it gets the `USER` role).
+
+## Run without Docker
+
+Requirements: Java 17, PostgreSQL, Node.js 18+.
+
+1. Create an empty database and load the sample data **before the first start** of the backend:
+   ```bash
+   createdb books
+   psql -d books -f db/seed.sql
+   ```
+2. Start the backend (default credentials `postgres`/`postgres`; override with `DB_USERNAME` and `DB_PASSWORD`):
+   ```bash
+   cd siw-libro-01
+   ./mvnw spring-boot:run
+   ```
+3. Optional, the React catalog page (needs the backend on port 8081):
+   ```bash
+   cd siw-libri-react
+   npm install
+   npm run dev
+   ```
+   It runs on http://localhost:5174.
+
+## Tests
+
 ```bash
 cd siw-libro-01
-./mvnw spring-boot:run
+./mvnw test -Dtest='*ServiceTest'
 ```
-The API will be exposed on port `8081` (`http://localhost:8081`).
 
-### 4. Start the Frontend
-Open a new terminal window, enter the frontend folder, and start Vite:
-```bash
-cd siw-libri-react
-npm install
-npm run dev
-```
-The frontend will be visible at the URL provided by Vite in the terminal (typically `http://localhost:5173`).
+7 unit tests (JUnit 5 + Mockito, no database needed) cover the main business rules: creating an order marks books as sold and computes the total; mood search returns only available books; only the seller can edit a book, and sold books cannot be edited. `./mvnw test` also runs a Spring context test, which needs PostgreSQL running.
 
-## 💡 Usage (Example Flow)
-1. **Registration**: A new user registers on the platform.
-2. **Exploration**: The user browses the catalog, filtering books based on mood (e.g., "Relaxing", "Thrilling").
-3. **Order**: The user selects a book and proceeds with the order. The order status changes from "IN_PROGRESS" to "SHIPPED" (managed by admins).
-4. **Review**: After reading, the user leaves a review and votes on the emotion the book evoked.
+## Known limitations
 
-## 🔮 Future Improvements
-- **Dockerization**: Add a `Dockerfile` and `docker-compose.yml` for instant development environment setup.
-- **External API Integration**: Integrate Google Books API or OpenLibrary for auto-completing book info (ISBN, plot).
-- **React Admin Dashboard**: Fully migrate all admin views from Thymeleaf to React.
-- **Recommendation System**: Use an algorithm based on emotional tags to recommend similar books to the user.
-
-## 📄 License
-Distributed under the MIT License. See `LICENSE` for more information.
+- The React frontend covers only the catalog page; the rest of the UI is Thymeleaf. The REST API is a single read-only endpoint, and the React page also lists books that are already sold.
+- Payments are not implemented: an order is marked as completed immediately.
+- Cover images are stored on the local filesystem (`siw-libro-01/uploads/`).
+- The schema is managed by Hibernate (`ddl-auto=update`), without migrations.
+- Tests cover two services only; there are no controller or end-to-end tests.
+- The UI is in Italian.
 
 ---
----
 
-# 🇮🇹 ReadYourMood (Italiano)
+# ReadYourMood — Italiano
 
-ReadYourMood è una piattaforma innovativa per la gestione, la recensione e l'acquisto di libri, con una caratteristica speciale: ti aiuta a trovare il libro perfetto in base alla tua **emozione** attuale. 
+**Un marketplace di libri usati in cui si possono cercare i libri in base all'emozione che trasmettono.** Realizzato con Spring Boot, PostgreSQL e Thymeleaf, più una piccola pagina catalogo in React che legge un endpoint REST. Progetto universitario per *Sistemi Informativi su Web* (Università Roma Tre, 2026), sviluppato in un team di due persone.
 
-Il progetto è composto da un solido backend in Spring Boot e da un'interfaccia utente moderna e reattiva sviluppata in React.
+▶️ **[Video completo (3 min)](docs/demo-full.mp4)**: ospite, utente registrato, utente bloccato, admin, pagina React e Swagger.
 
-## ✨ Features
-- **Ricerca Emotiva**: Trova o categorizza i libri in base alle emozioni (`EmozioneLibro`).
-- **Marketplace/Libreria**: Gestione dello stato dei libri (`CondizioneLibro`, `StatoLibro`) e degli ordini degli utenti (`Ordine`, `StatoOrdine`).
-- **Sistema di Recensioni**: Gli utenti possono lasciare feedback e recensioni sui libri letti (`Recensione`).
-- **Gestione Utenti**: Registrazione, autenticazione e autorizzazione (Admin/User) tramite Spring Security e JWT/Sessioni.
-- **Upload Immagini**: Sistema integrato per il caricamento delle copertine dei libri (fino a 5MB).
+## Funzionalità
 
-## 🛠 Tech Stack
+- **Ricerca per emozione**: ogni libro ha una di 8 emozioni (felice, triste, innamorato, riflessivo, ansioso, nostalgico, arrabbiato, spaventato).
+- **Catalogo con filtri** per titolo, autore, anno e valutazione, con paginazione.
+- **Vendita**: gli utenti registrati mettono in vendita i loro libri con condizione, prezzo e copertina (upload fino a 5 MB).
+- **Acquisto** di un singolo libro o di un set di libri dello stesso venditore; i libri acquistati risultano venduti.
+- **Recensioni al venditore** dopo un ordine.
+- **Area personale** con libri e ordini dell'utente, e profilo pubblico del venditore.
+- **Pannello admin**: blocco e sblocco degli utenti. Un utente bloccato non può accedere e i suoi libri non si possono acquistare.
+- **Pagina catalogo in React** che carica i libri da `GET /rest/libri` e li filtra lato client.
 
-### Backend (`siw-libro-01`)
-- **Java 17**
-- **Spring Boot 3** (Web, Data JPA, Security, Validation)
-- **Thymeleaf** (Usato per alcune viste di backoffice o legacy)
-- **PostgreSQL** (Database Relazionale)
-- **Springdoc OpenAPI (Swagger)** (Documentazione API automatica)
+## Architettura
 
-### Frontend (`siw-libri-react`)
-- **React 19**
-- **TypeScript**
-- **Vite** (Build tool e dev server ultra-veloce)
-- **Material UI (MUI)** (Libreria di componenti React per il design)
-- **Axios** (Client HTTP per l'integrazione con le API backend)
+- **La maggior parte dell'applicazione è renderizzata lato server**: i controller Spring MVC restituiscono viste Thymeleaf.
+- **Un solo endpoint REST** (`GET /rest/libri`, in sola lettura) alimenta la pagina React.
+- **Backend a livelli**: `controller` → `service` (regole di business) → `repository` (Spring Data JPA) → `model` (entità JPA).
+- **Sicurezza**: Spring Security con form login e sessione, password cifrate con BCrypt, due ruoli (`ADMIN`, `USER`).
 
-## 🏗 Architecture
-L'applicazione adotta una classica **Architettura Layered (a strati)** nel backend, che separa le responsabilità e facilita la manutenzione:
-- **`controller`**: Gestisce le richieste REST (dal frontend React) o MVC (per Thymeleaf).
-- **`service`**: Incapsula tutta la logica di business (gestione ordini, associazione emozioni-libri).
-- **`repository`**: Livello di persistenza tramite Spring Data JPA.
-- **`model`**: Entità JPA (`Libro`, `Ordine`, `Utente`, `Recensione`, ecc.) mappate direttamente sulle tabelle PostgreSQL.
-- **`authentication`**: Classi dedicate alla sicurezza e al login (Spring Security).
+## Il mio ruolo
 
-## 🚀 Setup & Installation
+Team di due persone. Divisione del lavoro durante il corso:
 
-### Prerequisiti
-- **Java 17+**
-- **Node.js 18+**
-- **PostgreSQL** installato e in esecuzione (porta predefinita 5432)
+- **Io**: entità JPA e repository, controller MVC e controller REST (con configurazione CORS), frontend React.
+- **La mia collega**: configurazione di Spring Security, livello service, upload delle copertine, registrazione e area personale.
+- **Insieme**: viste Thymeleaf, dati di esempio, configurazione di Swagger.
 
-### 1. Clonare il repository
+Dopo il corso (2026) ho preparato da sola il progetto per la pubblicazione: database di esempio senza dati personali, Docker Compose, test unitari sui servizi di ordini e libri, Swagger pubblico, correzione di bug e questo README.
+
+## Avvio rapido (Docker)
+
 ```bash
-git clone https://github.com/your-username/ReadYourMood.git
+git clone https://github.com/sarabaranes-dev/ReadYourMood.git
 cd ReadYourMood
+docker compose up --build
 ```
 
-### 2. Configurare il Database
-Crea un database PostgreSQL locale:
-```sql
-CREATE DATABASE books;
-```
-Le credenziali del database possono essere configurate tramite variabili d'ambiente. Di default si aspetta:
-- **Username**: `postgres`
-- **Password**: `postgres`
-*(Se il tuo ambiente locale richiede credenziali diverse, imposta le variabili d'ambiente `DB_USERNAME` e `DB_PASSWORD` prima di avviare l'applicazione, oppure aggiorna `siw-libro-01/src/main/resources/application.properties` in locale)*.
+Al primo avvio PostgreSQL carica i dati di esempio da `db/seed.sql`. App su http://localhost:8081, Swagger su http://localhost:8081/swagger-ui/index.html. Account demo: `admin`, `luca`, `paolo` (bloccato), tutti con password `password`. La porta 5432 deve essere libera.
 
-### 3. Avviare il Backend
-Spostati nella cartella del backend e avvia l'applicazione Spring Boot:
-```bash
-cd siw-libro-01
-./mvnw spring-boot:run
-```
-L'API sarà esposta sulla porta `8081` (`http://localhost:8081`).
+Per l'avvio senza Docker e per i test valgono i comandi della sezione inglese.
 
-### 4. Avviare il Frontend
-Apri una nuova finestra del terminale, entra nella cartella del frontend e avvia Vite:
-```bash
-cd siw-libri-react
-npm install
-npm run dev
-```
-Il frontend sarà visibile all'URL fornito da Vite nel terminale (tipicamente `http://localhost:5173`).
+## Limiti noti
 
-## 💡 Usage (Esempio di flusso)
-1. **Registrazione**: Un nuovo utente si registra alla piattaforma.
-2. **Esplorazione**: L'utente naviga il catalogo, filtrando i libri in base all'umore (es. "Rilassante", "Avvincente").
-3. **Ordine**: L'utente seleziona un libro e procede con l'ordine. Lo stato dell'ordine cambia da "IN_LAVORAZIONE" a "SPEDITO" (gestito dagli admin).
-4. **Recensione**: Dopo la lettura, l'utente lascia una recensione e vota l'emozione suscitata dal libro.
-
-## 🔮 Future Improvements
-- **Dockerizzazione**: Aggiungere `Dockerfile` e `docker-compose.yml` per un setup istantaneo dell'ambiente di sviluppo.
-- **Integrazione API Esterne**: Integrare Google Books API o OpenLibrary per l'autocompletamento delle info sui libri (ISBN, trama).
-- **Dashboard Admin React**: Migrare completamente tutte le viste admin da Thymeleaf a React.
-- **Sistema di Raccomandazione**: Usare un algoritmo basato sui tag emotivi per consigliare libri simili all'utente.
-
-## 📄 License
-Distribuito sotto la licenza MIT. Vedi `LICENSE` per maggiori informazioni.
+- React copre solo la pagina catalogo; il resto dell'interfaccia è in Thymeleaf. L'API REST è un solo endpoint in sola lettura, e la pagina React mostra anche i libri già venduti.
+- I pagamenti non sono implementati: un ordine risulta completato subito.
+- Le copertine sono salvate sul filesystem locale.
+- Lo schema è gestito da Hibernate (`ddl-auto=update`), senza migrazioni.
+- I test coprono solo due service; non ci sono test sui controller né end-to-end.
